@@ -1,30 +1,26 @@
-import { cookies } from "next/headers";
 import { api } from "./api";
-import axios from "axios";
 import { Note } from "@/types/note";
 import { User } from "@/types/user";
+import { cookies } from "next/headers";
 
 export const checkServerSession = async (): Promise<User | null> => {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join(";");
 
-  const res = await api.get<User | null>("/auth/session", {
-    headers: { cookie: cookieHeader },
-  });
-  return res.data;
+    const { data } = await api.get("/auth/session", {
+      headers: { Cookie: cookieHeader },
+      withCredentials: true,
+    });
+
+    return data || null;
+  } catch {
+    return null;
+  }
 };
-
-axios.defaults.baseURL = "https://notehub-public.goit.study/api/notes";
-const API_URL = process.env.NEXT_PUBLIC_NOTEHUB_TOKEN;
-
-const instance = axios.create({
-  headers: {
-    Authorization: `Bearer ${API_URL}`,
-  },
-});
 
 export async function getProfile(): Promise<User> {
   const { data } = await api.get<User>("/users/me");
@@ -51,7 +47,7 @@ export interface FetchNotesParams {
 }
 
 export const fetchNoteById = async (id: string): Promise<Note> => {
-  const response = await instance.get<Note>(`/${id}`);
+  const response = await api.get<Note>(`/${id}`);
   return response.data;
 };
 
@@ -72,7 +68,7 @@ export const fetchNotes = async (
     queryParams.tag = tag;
   }
 
-  const response = await instance.get<FetchNotesResponse>("", {
+  const response = await api.get<FetchNotesResponse>("", {
     params: queryParams,
   });
   return response.data;
@@ -88,6 +84,6 @@ export async function createNote(data: {
 }
 
 export async function deleteNote(id: string) {
-  const response = await instance.delete<{ success: boolean }>(`/${id}`);
+  const response = await api.delete<{ success: boolean }>(`/${id}`);
   return response.data;
 }

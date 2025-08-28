@@ -2,6 +2,7 @@ import { Note, NoteTags } from "@/types/note";
 import { api } from "./api";
 import { User } from "@/types/user";
 
+
 interface UserInfo {
   isAuth: boolean;
   user?: User;
