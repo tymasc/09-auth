@@ -1,26 +1,7 @@
 import { api } from "./api";
 import { Note } from "@/types/note";
 import { User } from "@/types/user";
-import { cookies } from "next/headers";
 
-export const checkServerSession = async (): Promise<User | null> => {
-  try {
-    const cookieStore = await cookies();
-    const cookieHeader = cookieStore
-      .getAll()
-      .map((c) => `${c.name}=${c.value}`)
-      .join(";");
-
-    const { data } = await api.get("/auth/session", {
-      headers: { Cookie: cookieHeader },
-      withCredentials: true,
-    });
-
-    return data || null;
-  } catch {
-    return null;
-  }
-};
 
 export async function getProfile(): Promise<User> {
   const { data } = await api.get<User>("/users/me");
