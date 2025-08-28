@@ -13,7 +13,7 @@ const AuthNavigation = () => {
     try {
       await logout();
       clearIsAuthenticated();
-      router.back();
+      router.push("/sign-in");
     } catch (err) {
       console.error("Logout failed", err);
     }

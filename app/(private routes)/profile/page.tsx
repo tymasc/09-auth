@@ -1,11 +1,16 @@
-"use client";
 import css from "./ProfilePage.module.css";
 import Link from "next/link";
-import { useAuthStore } from "@/lib/store/authStore";
+import { getProfile } from "@/lib/api/serverApi";
 import Image from "next/image";
+import { Metadata } from "next";
 
-const ProfilePage = () => {
-  const { user } = useAuthStore();
+export const metadata: Metadata = {
+  title: "Profile Page",
+  description: "It is a profile page",
+};
+
+const ProfilePage = async () => {
+  const user = await getProfile();
 
   if (!user) return null;
 

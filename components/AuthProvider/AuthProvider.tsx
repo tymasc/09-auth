@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { checkServerSession } from "../../lib/store/checkServerSession";
+import { checkServerSession } from "../../lib/api/clientApi";
 import { User } from "@/types/user";
 
 interface AuthContextType {
