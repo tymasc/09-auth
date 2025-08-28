@@ -4,25 +4,25 @@ import { User } from "@/types/user";
 
 interface AuthUser {
   user: User | null;
-  isAuth: boolean;
+  isAuthenticated: boolean;
   setUser: (user: User) => void;
-  clearIsAuth: () => void;
+  clearIsAuthenticated: () => void;
 }
 
 export const useAuthStore = create<AuthUser>()(
   persist(
     (set) => ({
       user: null,
-      isAuth: false,
+      isAuthenticated: false,
       setUser: (user) =>
         set({
           user,
-          isAuth: true,
+          isAuthenticated: true,
         }),
-      clearIsAuth: () =>
+      clearIsAuthenticated: () =>
         set({
           user: null,
-          isAuth: false,
+          isAuthenticated: false,
         }),
     }),
     {

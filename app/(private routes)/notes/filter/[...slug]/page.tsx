@@ -1,6 +1,6 @@
 import TagsMenu from "@/components/TagsMenu/TagsMenu";
 import Notes from "./Notes.client";
-import { fetchNotes } from "@/app/api/api";
+import { fetchNotes } from "@/lib/api/serverApi";
 import { Metadata } from "next";
 
 interface NotesPageProps {

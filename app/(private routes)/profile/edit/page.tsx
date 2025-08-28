@@ -8,7 +8,7 @@ import { updateUserProfile } from "@/lib/api/clientApi";
 
 const EditProfilePage = () => {
   const { user, setUser } = useAuthStore();
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(user?.username || "");
   const router = useRouter();
 
   if (!user) return null;
@@ -17,7 +17,7 @@ const EditProfilePage = () => {
     e.preventDefault();
     const updated = await updateUserProfile({ username });
     setUser(updated);
-    router.push("/profile");
+    router.back();
   }
 
   return (
@@ -51,7 +51,7 @@ const EditProfilePage = () => {
             <button
               type="button"
               className={css.cancelButton}
-              onClick={() => router.push("/profile")}
+              onClick={() => router.back()}
             >
               Cancel
             </button>

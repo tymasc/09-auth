@@ -33,6 +33,7 @@ const SignInPage = () => {
           <input
             id="email"
             type="email"
+            name="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={css.input}
@@ -45,6 +46,7 @@ const SignInPage = () => {
           <input
             id="password"
             type="password"
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={css.input}
