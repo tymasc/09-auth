@@ -2,6 +2,7 @@ import { api } from "./api";
 import { Note } from "@/types/note";
 import { User } from "@/types/user";
 import { cookies } from "next/headers";
+import { AxiosResponse } from "axios";
 
 export async function withAuthHeaders() {
   const cookieStore = await cookies();
@@ -48,12 +49,10 @@ export async function refreshSession(refreshToken: string) {
   return data;
 }
 
-export async function checkSession(): Promise<{ isAuth: boolean }> {
-  const { data } = await api.get<{ isAuth: boolean }>(
-    "/auth/session",
-    await withAuthHeaders()
-  );
-  return data;
+export async function checkSession(): Promise<
+  AxiosResponse<{ isAuth: boolean }>
+> {
+  return api.get<{ isAuth: boolean }>("/auth/session", await withAuthHeaders());
 }
 
 export async function getProfile(): Promise<User> {

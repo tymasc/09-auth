@@ -1,39 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { checkSession, refreshSession } from "./lib/api/serverApi";
+import { cookies } from "next/headers";
 
 const privateRoutes = ["/profile", "/notes"];
 const publicRoutes = ["/sign-in", "/sign-up"];
 
-async function checkSession(accessToken: string) {
-  try {
-    const res = await fetch(`${process.env.API_URL}/auth/session`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!res.ok) return { isAuth: false };
-    return await res.json();
-  } catch {
-    return { isAuth: false };
-  }
-}
-
-async function refreshSession(refreshToken: string) {
-  try {
-    const res = await fetch(`${process.env.API_URL}/auth/session`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get("accessToken")?.value;
-  const refreshToken = request.cookies.get("refreshToken")?.value;
+export async function middleware(request: Request) {
+  const { pathname } = new URL(request.url);
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  const refreshToken = cookieStore.get("refreshToken")?.value;
 
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
@@ -45,17 +21,21 @@ export async function middleware(request: NextRequest) {
   let isAuthenticated = false;
 
   if (accessToken) {
-    const session = await checkSession(accessToken);
-    isAuthenticated = session.isAuth;
+    const session = await checkSession();
+    isAuthenticated = session.status === 200 && session.data.isAuth;
   }
 
   if (!isAuthenticated && refreshToken) {
     const newTokens = await refreshSession(refreshToken);
-    if (newTokens?.accessToken && newTokens?.refreshToken) {
+    if (newTokens.status === 200 && newTokens.data.accessToken) {
       const response = NextResponse.next();
       response.cookies.set("accessToken", newTokens.accessToken);
       response.cookies.set("refreshToken", newTokens.refreshToken);
-      return response;
+
+      const sessionRes = await checkSession();
+      if (sessionRes.status === 200 && sessionRes.data.isAuth) {
+        return response;
+      }
     }
   }
 
