@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { checkSession, refreshSession } from "./lib/api/serverApi";
 import { cookies } from "next/headers";
 
 const privateRoutes = ["/profile", "/notes"];
 const publicRoutes = ["/sign-in", "/sign-up"];
 
-export async function middleware(request: Request) {
+export async function middleware(request: NextRequest) {
   const { pathname } = new URL(request.url);
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
@@ -33,9 +33,25 @@ export async function middleware(request: Request) {
       response.cookies.set("refreshToken", newTokens.refreshToken);
 
       const sessionRes = await checkSession();
-      if (sessionRes.status === 200 && sessionRes.data.isAuth) {
-        return response;
+      isAuthenticated = sessionRes.status === 200 && sessionRes.data.isAuth;
+
+      if (!isAuthenticated && isPrivateRoute) {
+        const redirectResponse = NextResponse.redirect(
+          new URL("/sign-in", request.url)
+        );
+        redirectResponse.cookies.delete("accessToken");
+        redirectResponse.cookies.delete("refreshToken");
+        return redirectResponse;
       }
+
+      return response;
+    } else if (isPrivateRoute) {
+      const redirectResponse = NextResponse.redirect(
+        new URL("/sign-in", request.url)
+      );
+      redirectResponse.cookies.delete("accessToken");
+      redirectResponse.cookies.delete("refreshToken");
+      return redirectResponse;
     }
   }
 
