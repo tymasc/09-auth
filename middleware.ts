@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkSession, refreshSession } from "./lib/api/serverApi";
+import { checkSession } from "./lib/api/serverApi";
 import { cookies } from "next/headers";
 
 const privateRoutes = ["/profile", "/notes"];
@@ -19,54 +19,46 @@ export async function middleware(request: NextRequest) {
   );
 
   let isAuthenticated = false;
+  const response = NextResponse.next();
 
-  if (accessToken) {
+  if (accessToken || refreshToken) {
     const session = await checkSession();
-    isAuthenticated = session.status === 200 && session.data.isAuth;
-  }
-
-  if (!isAuthenticated && refreshToken) {
-    const newTokens = await refreshSession(refreshToken);
-    if (newTokens.status === 200 && newTokens.data.accessToken) {
-      const response = NextResponse.next();
-      response.cookies.set("accessToken", newTokens.accessToken);
-      response.cookies.set("refreshToken", newTokens.refreshToken);
-
-      const sessionRes = await checkSession();
-      isAuthenticated = sessionRes.status === 200 && sessionRes.data.isAuth;
-
-      if (!isAuthenticated && isPrivateRoute) {
-        const redirectResponse = NextResponse.redirect(
-          new URL("/sign-in", request.url)
-        );
-        redirectResponse.cookies.delete("accessToken");
-        redirectResponse.cookies.delete("refreshToken");
-        return redirectResponse;
-      }
-
-      return response;
-    } else if (isPrivateRoute) {
-      const redirectResponse = NextResponse.redirect(
-        new URL("/sign-in", request.url)
-      );
-      redirectResponse.cookies.delete("accessToken");
-      redirectResponse.cookies.delete("refreshToken");
-      return redirectResponse;
+    const setCookieHeader = session.headers["set-cookie"];
+    if (setCookieHeader) {
+      const cookiesArray = Array.isArray(setCookieHeader)
+        ? setCookieHeader
+        : [setCookieHeader];
+      cookiesArray.forEach((cookiesStr) => {
+        const [cookieName, ...rest] = cookiesStr.split("=");
+        const cookieValue = rest.join("=").split(";")[0]?.trim();
+        if (cookieName && cookieValue) {
+          response.cookies.set(cookieName.trim(), cookieValue);
+        }
+      });
     }
+    isAuthenticated = session.status === 200 && session.data.isAuth === true;
   }
 
   if (isPrivateRoute && !isAuthenticated) {
-    const response = NextResponse.redirect(new URL("/sign-in", request.url));
-    response.cookies.delete("accessToken");
-    response.cookies.delete("refreshToken");
-    return response;
+    if (!accessToken && !refreshToken) {
+      const responseRed = NextResponse.redirect(
+        new URL("/sign-in", request.url)
+      );
+      responseRed.cookies.delete("accessToken");
+      responseRed.cookies.delete("refreshToken");
+      return responseRed;
+    }
   }
 
   if (isPublicRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL("/", request.url));
+    const redResponse = NextResponse.redirect(new URL("/", request.url));
+    response.cookies.getAll().forEach((cook) => {
+      redResponse.cookies.set(cook);
+    });
+    return redResponse;
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
